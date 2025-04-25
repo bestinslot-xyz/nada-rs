@@ -15,8 +15,12 @@ pub fn encode(input: impl IntoIterator<Item = u8>) -> Vec<u8> {
             }
         } else {
             if zero_run > 0 {
-                out.push(MARKER);
-                out.push(zero_run);
+                if zero_run == 1 {
+                    out.push(0);
+                } else {
+                    out.push(MARKER);
+                    out.push(zero_run);
+                }
                 zero_run = 0;
             }
             if byte == MARKER {
