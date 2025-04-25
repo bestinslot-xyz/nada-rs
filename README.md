@@ -33,8 +33,6 @@ To add `nada` to your project, use
 Here is a simple example of how to use the encode and decode functions:
 
 ```rust
-use nada;
-
 let data = vec![0x01, 0x00, 0x00, 0xFF];
 let encoded = nada::encode(&data);
 let decoded = nada::decode(&encoded);
