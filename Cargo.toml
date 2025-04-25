@@ -1,0 +1,12 @@
+[package]
+name = "nada"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+description = "Compression-focused encoding for zero-heavy solidity calldata and bytecode"
+repository = "https://github.com/bestinslot-xyz/nada-rs"
+readme = "README.md"
+keywords = ["solidity", "calldata", "encoding"]
+categories = ["encoding"]
+
+[dependencies]
