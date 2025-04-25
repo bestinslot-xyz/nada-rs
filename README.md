@@ -36,8 +36,8 @@ Here is a simple example of how to use the encode and decode functions:
 
 ```rust
 let data = vec![0x01, 0x00, 0x00, 0xFF];
-let encoded = nada::encode(&data);
-let decoded = nada::decode(&encoded);
+let encoded = nada::encode(data);
+let decoded = nada::decode(encoded);
 
 assert_eq!(decoded, Ok(data));
 ```
