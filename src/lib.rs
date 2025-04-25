@@ -1,72 +1,29 @@
-static MARKER: u8 = 0xFF;
+mod encoder;
+use encoder::Encoder;
+
+mod decoder;
+pub use decoder::DecodeError;
+use decoder::Decoder;
 
 pub fn encode(input: impl IntoIterator<Item = u8>) -> Vec<u8> {
-    let mut out = Vec::new();
-    let mut zero_run = 0;
+    let mut encoder = Encoder::new();
 
     for byte in input {
-        if byte == 0 {
-            zero_run += 1;
-            // Max run length
-            if zero_run == 255 {
-                out.push(MARKER);
-                out.push(255);
-                zero_run = 0;
-            }
-        } else {
-            if zero_run > 0 {
-                if zero_run == 1 {
-                    out.push(0);
-                } else {
-                    out.push(MARKER);
-                    out.push(zero_run);
-                }
-                zero_run = 0;
-            }
-            if byte == MARKER {
-                // Escape literal 0xFF to avoid confusion with marker
-                out.push(MARKER);
-                out.push(0);
-            } else {
-                out.push(byte);
-            }
-        }
+        encoder.feed(byte);
     }
 
-    if zero_run > 0 {
-        out.push(0xFF);
-        out.push(zero_run);
-    }
-
-    out
+    encoder.output()
 }
 
 pub fn decode(input: impl IntoIterator<Item = u8>) -> Result<Vec<u8>, DecodeError> {
-    let mut out = Vec::new();
+    let mut decoder = Decoder::new();
     let mut iter = input.into_iter();
 
     while let Some(byte) = iter.next() {
-        if byte == 0xFF {
-            if let Some(n) = iter.next() {
-                if n == 0 {
-                    out.push(0xFF);
-                } else {
-                    out.extend(std::iter::repeat(0).take(n as usize));
-                }
-            } else {
-                return Err(DecodeError::UnexpectedEOF);
-            }
-        } else {
-            out.push(byte);
-        }
+        decoder.feed(byte)?;
     }
 
-    Ok(out)
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum DecodeError {
-    UnexpectedEOF, // Reached the end of input unexpectedly
+    decoder.output()
 }
 
 #[cfg(test)]
@@ -118,7 +75,7 @@ mod tests {
     fn test_encode_decode_only_ff() {
         let data = vec![0xFF, 0xFF, 0xFF];
         let encoded = encode(data.clone());
-        assert_eq!(encoded, vec![0xFF, 0, 0xFF, 0, 0xFF, 0]);
+        assert_eq!(encoded, vec![0xFF, 2, 0xFF, 1]);
         let decoded = decode(encoded);
         assert_eq!(Ok(data), decoded);
     }
@@ -145,7 +102,7 @@ mod tests {
         let mut data = vec![0; 300];
         data[100] = 0xFF;
         let encoded = encode(data.clone());
-        assert_eq!(encoded, vec![0xFF, 100, 0xFF, 0, 0xFF, 199]);
+        assert_eq!(encoded, vec![0xFF, 100, 0xFF, 1, 0xFF, 199]);
         let decoded = decode(encoded);
         assert_eq!(Ok(data), decoded);
     }
@@ -162,5 +119,11 @@ mod tests {
         let data = vec![0xFF, 25, 0xFF];
         let result = decode(data);
         assert_eq!(result, Err(DecodeError::UnexpectedEOF));
+    }
+
+    #[test]
+    fn test_reserved_sequence() {
+        let encoded = vec![0xFF, 0x01, 0xFF, 0x05, 2, 0xFF, 0, 0x03];
+        assert_eq!(decode(encoded), Err(DecodeError::ReservedSequence));
     }
 }

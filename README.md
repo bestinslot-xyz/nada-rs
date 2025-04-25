@@ -8,8 +8,10 @@ Compression-focused encoding for zero-heavy Solidity calldata and bytecode.
 
 ## How it Works
 
-- `0xFF 0x00` encodes a literal `0xFF`
-- `0xFF N` (1 ≤ N ≤ 255) encodes `N` zero bytes
+- `0xFF 0x00` is a reserved sequence
+- `0xFF 0x01` encodes a single `0xFF`
+- `0xFF 0x02` encodes a double `0xFF`
+- `0xFF N` (3 ≤ N ≤ 255) encodes `N` zero bytes
 - All other bytes are passed through unchanged
 
 This encoding helps reduce the size of sequences with a high proportion of zero bytes, which are common in Solidity calldata and bytecode.
@@ -18,7 +20,7 @@ This encoding helps reduce the size of sequences with a high proportion of zero 
 
 | Input                          | Encoded                          |
 |--------------------------------|----------------------------------|
-| `[0x01, 0x00, 0x00, 0xFF]`    | `[0x01, 0xFF, 0x02, 0xFF, 0x00]` |
+| `[0x00, 0x00, 0x02, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF]`    | `[0x00, 0x00, 0x02, 0xFF, 0x02, 0xFF, 0x04, 0xFF, 0x01]` |
 
 
 ## Installation
@@ -40,7 +42,7 @@ let decoded = nada::decode(&encoded);
 assert_eq!(decoded, Ok(data));
 ```
 
-`decode` returns a `DecodeError` if the input ends unexpectedly, such as when a `0xFF` marker is found without a following run length byte, indicating incomplete or malformed encoded data.
+`decode` returns a `DecodeError` if the input ends unexpectedly, such as when a `0xFF` marker is found without a following run length byte, indicating incomplete or malformed encoded data. It also returns an error if the reserved sequence `0xFF00` is encountered.
 
 ### License
 
