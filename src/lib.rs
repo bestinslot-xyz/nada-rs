@@ -26,6 +26,23 @@ pub fn decode(input: impl IntoIterator<Item = u8>) -> Result<Vec<u8>, DecodeErro
     decoder.output()
 }
 
+pub fn decode_with_limit(
+    input: impl IntoIterator<Item = u8>,
+    limit: usize,
+) -> Result<Vec<u8>, DecodeError> {
+    let mut decoder = Decoder::new();
+    let mut iter = input.into_iter();
+
+    while let Some(byte) = iter.next() {
+        decoder.feed(byte)?;
+        if decoder.len() >= limit {
+            return Err(DecodeError::LimitExceeded);
+        }
+    }
+
+    decoder.output()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -125,5 +142,19 @@ mod tests {
     fn test_reserved_sequence() {
         let encoded = vec![0xFF, 0x01, 0xFF, 0x05, 2, 0xFF, 0, 0x03];
         assert_eq!(decode(encoded), Err(DecodeError::ReservedSequence));
+    }
+
+    #[test]
+    fn test_limit_exceeded() {
+        let data = vec![0xFF, 0x01, 0, 0xFF, 5, 0, 0, 0xFF, 10];
+        let result = decode_with_limit(data.clone(), 5);
+        assert_eq!(result, Err(DecodeError::LimitExceeded));
+    }
+
+    #[test]
+    fn test_limit_not_exceeded() {
+        let data = vec![0xFF, 0x01, 0, 0xFF, 5, 0, 0, 0xFF, 10];
+        let result = decode_with_limit(data.clone(), 20);
+        assert!(result.is_ok());
     }
 }

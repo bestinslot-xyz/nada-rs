@@ -204,7 +204,10 @@ mod tests {
         encoder.feed(3);
 
         let encoded = encoder.output();
-        assert_eq!(encoded, vec![0, 0xFF, 1, 1, 0xFF, 6, 2, 0xFF, 4, 0xFF, 1, 3]);
+        assert_eq!(
+            encoded,
+            vec![0, 0xFF, 1, 1, 0xFF, 6, 2, 0xFF, 4, 0xFF, 1, 3]
+        );
     }
 
     #[test]
@@ -221,6 +224,9 @@ mod tests {
         encoder.feed(3);
 
         let encoded = encoder.output();
-        assert_eq!(encoded, vec![0, 0xFF, 1, 1, 0xFF, 2, 0xFF, 1, 2, 0xFF, 1, 3]);
+        assert_eq!(
+            encoded,
+            vec![0, 0xFF, 1, 1, 0xFF, 2, 0xFF, 1, 2, 0xFF, 1, 3]
+        );
     }
 }

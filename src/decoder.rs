@@ -53,12 +53,17 @@ impl Decoder {
         }
         Ok(self.out)
     }
+
+    pub fn len(&self) -> usize {
+        self.out.len()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DecodeError {
     UnexpectedEOF,    // Reached the end of input unexpectedly
     ReservedSequence, // Encountered a reserved sequence, e.g., 0xFF followed by 0x00
+    LimitExceeded,    // Output exceeds the specified limit
 }
 
 #[cfg(test)]
